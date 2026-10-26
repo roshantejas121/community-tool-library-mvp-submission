@@ -1,49 +1,53 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../prisma.config');
+const prisma = require('../db');
 
-// GET /tools - Fetch all tools
 router.get('/tools', async (req, res) => {
   try {
-    const tools = await prisma.tool.findMany();
+    const tools = await prisma.tool.findMany({ orderBy: { id: 'asc' } });
     res.json(tools);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Unable to load tools.' });
   }
 });
 
-// BUG 1: Tool Creation Does Not Persist
-// The bug here is that we create the tool in memory but don't call Prisma.
-router.post("/tools", async (req, res) => {
-  const toolData = {
-    name: req.body.name,
-    description: req.body.description,
-    isAvailable: true
-  };
+router.post('/tools', async (req, res) => {
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
 
-  // THE BUG: We skip prisma.tool.create() and return a mock object
-  const tool = { id: Date.now(), ...toolData };
+  if (!name || !description) {
+    return res.status(400).json({ message: 'Name and description are required.' });
+  }
 
-  res.status(201).json(tool);
+  try {
+    const tool = await prisma.tool.create({
+      data: { name, description, isAvailable: true },
+    });
+    return res.status(201).json(tool);
+  } catch (error) {
+    return res.status(500).json({ message: 'Unable to create tool.' });
+  }
 });
 
-// PATCH /tools/:id - Borrow/Return tool
-router.patch("/tools/:id", async (req, res) => {
-  const { id } = req.params;
+router.patch('/tools/:id', async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: 'Tool id must be an integer.' });
+  }
+
   try {
-    const existingTool = await prisma.tool.findUnique({ where: { id: parseInt(id) } });
-    
-    if (existingTool) {
-      const updatedTool = await prisma.tool.update({
-        where: { id: parseInt(id) },
-        data: { isAvailable: !existingTool.isAvailable }
-      });
-      res.json(updatedTool);
-    } else {
-      res.status(404).json({ message: "Tool not found" });
+    const existingTool = await prisma.tool.findUnique({ where: { id } });
+    if (!existingTool) {
+      return res.status(404).json({ message: 'Tool not found.' });
     }
+
+    const updatedTool = await prisma.tool.update({
+      where: { id },
+      data: { isAvailable: !existingTool.isAvailable },
+    });
+    return res.json(updatedTool);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Unable to update tool.' });
   }
 });
 

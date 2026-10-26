@@ -1,43 +1,22 @@
-# Community Tool Library
+# Community Tool Library MVP
 
-## 🛠️ Overview
-The **Community Tool Library** is a local neighborhood platform where residents can share their tools.
+A focused neighborhood tool-sharing application. The MVP lets residents list tools, browse the shared inventory, and borrow or return tools with state persisted in PostgreSQL through Prisma.
 
----
+## Stack
 
-## 🚀 Getting Started
+React + Vite client, Express API, Prisma ORM, and PostgreSQL.
 
-### 1. Database Setup (PostgreSQL)
-Ensure you have PostgreSQL running. Create a database named `tool_library_broken`.
-In `server/.env`, set your connection string:
-```bash
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tool_library_broken?schema=public"
-```
+## Local setup
 
-### 2. Server Setup (Prisma)
-```bash
-cd server
-npm install
-npx prisma db push  # To sync database schema
-node index.js
-```
-*Runs on http://localhost:5000*
+1. Create a PostgreSQL database and copy `server/.env.example` to `server/.env`.
+2. In `server/`, run `npm install`, `npx prisma db push`, and `npm start`.
+3. In `client/`, run `npm install` and `npm run dev`.
+4. Open `http://localhost:3000`.
 
-### 3. Client Setup
-```bash
-cd client
-npm install
-npm run dev
-```
-*Runs on http://localhost:3000*
+The Vite development server proxies `/api` to `http://localhost:5000`. For a separately deployed backend, set the client environment variable `VITE_API_URL` to its public URL before building.
 
----
+The backend exposes `GET /health` for deployment health checks.
 
-## � Current Status: "It's Broken"
-The development team lost focus. Identify the MVP and fix the 5 major bugs documented in `Changes.md`.
+## Engineering notes
 
-### Hints:
-- Check `useEffect` in `App.jsx` (Infinite loop).
-- Check `POST /api/tools` in `server/routes/tools.js` (Does it actually call Prisma?).
-- Check `PATCH` endpoint path in `ToolCard.jsx`.
-- Check state management in `App.jsx` (Immutability).
+See [Changes.md](./Changes.md) for the investigation, root causes, fixes, and verification performed for the MVP restoration.
